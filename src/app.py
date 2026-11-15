@@ -54,13 +54,18 @@ def main():
     st.sidebar.subheader("Parámetros de Difusión")
     strength = st.sidebar.slider(
         "Fuerza de alteración (Strength)", 
-        min_value=0.1, max_value=0.8, value=0.35, step=0.05,
-        help="Valores bajos preservan la estructura original; valores altos permiten mayor corrección pero aumentan el riesgo de alucinación."
+        min_value=0.1, max_value=0.8, value=0.20, step=0.05,
+        help="Usa valores bajos (0.15 - 0.25) para fotos con ruido para evitar que el modelo alucine o distorsione la imagen."
     )
     
     prompt = st.sidebar.text_input(
         "Prompt de guía semántica", 
-        value="High quality, sharp focus, detailed, restored photograph, clear edges"
+        value="Minimal denoising, sharp photograph, clear details, authentic texture, no painting"
+    )
+
+    negative_prompt = st.sidebar.text_input(
+        "Prompt Negativo", 
+        value="cartoon, painting, illustration, distorted faces, blurry, artifacts, deformed, low resolution"
     )
 
     if upload_file is not None:
@@ -69,7 +74,7 @@ def main():
         col1, col2 = st.columns(2)
         with col1:
             st.subheader("📥 Imagen Original (Degradada)")
-            st.image(original_image, use_container_width=True)
+            st.image(original_image, width='stretch')
 
         # Carga de modelos
         with st.spinner("Cargando modelos de Hugging Face en memoria..."):
@@ -83,6 +88,7 @@ def main():
                 restored_image = restorer.restore_image(
                     image=original_image,
                     prompt=prompt,
+                    negative_prompt=negative_prompt,
                     strength=strength
                 )
                 
@@ -101,17 +107,17 @@ def main():
             
             with res_col1:
                 st.subheader("Original")
-                st.image(original_image, use_container_width=True)
+                st.image(original_image, width='stretch')
                 st.caption(f"**VLM Caption:** *{caption_original}*")
                 
             with res_col2:
                 st.subheader("Restaurada (Difusión)")
-                st.image(restored_image, use_container_width=True)
+                st.image(restored_image, width='stretch')
                 st.caption(f"**VLM Caption:** *{caption_restored}*")
 
             with res_col3:
                 st.subheader("🔍 Mapa de Diferencias (HAI)")
-                st.image(diff_map, use_container_width=True)
+                st.image(diff_map, width='stretch')
                 st.caption("Las zonas más brillantes indican mayor intervención / modificación del modelo.")
 
             # Panel de Transparencia y Honestidad (HAI)
