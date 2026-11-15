@@ -2,27 +2,22 @@
 
 > **Trabajo Integrador:** MVP funcional de restauración de imágenes (*Denoising / Deblurring*) mediante modelos de difusión, inspección visual asistida por Inteligencia Artificial y controles de transparencia ética (HAI - Human-AI Interaction).
 
----
-
 ## 📋 Descripción del Proyecto
 
 **Diffusion Restore & Inspect** es una aplicación modular desarrollada en Python para abordar la tarea de **Denoising y Deblurring** (Opción B) en la restauración de imágenes degradadas. El sistema combina el poder generativo de los modelos de difusión estocásticos con modelos de lenguaje visual (VLM) para auditar semánticamente los cambios y un panel de transparencia basado en mapas de diferencias absolutas. Esto permite distinguir de forma clara y auditable qué información fue real y qué porción fue rellenada o alterada por el *prior* del modelo.
 
----
-
 ## 🛠️ Stack Tecnológico
 
 El proyecto está diseñado bajo los principios de *Clean Code*, arquitectura modular y gestión moderna de dependencias:
-- **Lenguaje:** Python 3.12
-- **Gestor de Entorno y Paquetes:** `uv` (herramienta de alto rendimiento para flujos limpios y reproducibles).
-- **Interfaz de Usuario:** Streamlit (despliegue web local interactivo).
-- **Deep Learning & IA:** 
+
+* **Lenguaje:** Python 3.12
+* **Gestor de Entorno y Paquetes:** `uv` (herramienta de alto rendimiento para flujos limpios y reproducibles).
+* **Interfaz de Usuario:** Streamlit (despliegue web local interactivo).
+* **Deep Learning & IA:**
   * PyTorch (`torch`) para el soporte de tensores y ejecución en GPU/CPU.
   * Hugging Face `diffusers` (pipeline de *Image-to-Image* / *Stable Diffusion*).
   * Hugging Face `transformers` (BLIP para subtitulado y comprensión semántica automatizada).
-- **Procesamiento de Imágenes y Métricas:** Pillow (PIL), NumPy, OpenCV y Matplotlib.
-
----
+* **Procesamiento de Imágenes y Métricas:** Pillow (PIL), NumPy, OpenCV y Matplotlib.
 
 ## 🧠 Modelos de IA Utilizados
 
@@ -39,7 +34,66 @@ El sistema integra dos componentes principales basados en modelos preentrenados 
    * **Naturaleza:** Modelo preentrenado de subtitulado de imágenes.
    * **Funcionamiento:** Analiza de manera independiente tanto la imagen original como la imagen restaurada para generar descripciones automáticas en lenguaje natural, permitiendo auditar si la semántica clave del contenido se ha conservado o alterado.
 
----
+## 🔄 Flujograma de Arquitectura y Auditoría HAI
+
+El siguiente diagrama representa el flujo completo de procesamiento, desde la ingesta del archivo hasta la validación paralela de transparencia:
+
+```text
++-----------------------------------------------------------------------+
+|                    INICIO: INTERFAZ WEB STREAMLIT                     |
++-----------------------------------+-----------------------------------+
+                                    |
+                                    v
++-----------------------------------------------------------------------+
+|             INGESTA DE IMAGEN DE ENTRADA (.jpg / .png)                |
+|        + Configuración: Strength, Prompt Positivo y Negativo          |
++-----------------------------------+-----------------------------------+
+                                    |
+                                    v
+                  /-----------------------------------\
+                 /     SELECCIÓN DE ESCENARIO          \
+                 \-------------------------------------/
+                     |                             |
+     [Prueba Positiva: Denoising]     [Prueba Negativa: Fallo Controlado]
+                     |                             |
+                     v                             v
++-----------------------------------+ +---------------------------------+
+|   PREPROCESAMIENTO CLÁSICO        | |   INSUMO VECTORIAL / SINTÉTICO  |
+|   Filtro OpenCV (Atenuación       | |   Con ruido / artefactos        |
+|   de ruido de alta frecuencia)    | |   inyectados                    |
++--------------------+--------------+ +----------------+----------------+
+                     |                                 |
+                     +----------------+----------------+
+                                      |
+                                      v
++-----------------------------------------------------------------------+
+|                 PIPELINE DE DIFUSIÓN ESTOCÁSTICA                      |
+|               runwayml/stable-diffusion-v1-5 (Img2Img)                |
+|        Proyección Latente + Denoising guiado por Prompts/Strength     |
++-----------------------------------+-----------------------------------+
+                                    |
+                                    v
++-----------------------------------------------------------------------+
+|                    GENERACIÓN DE IMAGEN RESTAURADA                    |
++-----------------------------------+-----------------------------------+
+                                    |
+                  +-----------------+-----------------+
+                  |                                   |
+                  v                                   v
++-----------------------------------+ +---------------------------------+
+|      CAPA DE INSPECCIÓN VLM       | |     CAPA DE AUDITORÍA HAI       |
+|   Salesforce/blip-image-caption   | |   Mapa de Diferencias Absolutas |
+|   Caption Original vs Restaurada  | |   |I_original - I_restaurada|   |
++-----------------+-----------------+ +----------------+----------------+
+                  |                                   |
+                  +-----------------+-----------------+
+                                    |
+                                    v
++-----------------------------------------------------------------------+
+|              CONSOLIDACIÓN EN PANEL DE TRANSPARENCIA HAI              |
+|    Validación Semántica + Visualización de Zonas Intervenidas         |
++-----------------------------------------------------------------------+
+```
 
 ## 📂 Estructura del Proyecto
 
@@ -57,38 +111,39 @@ diffusion-restore-inspect/
 └── README.md                 # Documentación técnica del proyecto
 ```
 
----
-
 ## ⚙️ Configuración y Despliegue Local
 
 Para levantar el proyecto en tu entorno local utilizando `uv`, sigue estos pasos desde la terminal:
 
 1. **Clonar o situarse en la raíz del repositorio:**
+
    ```powershell
    cd C:\repos\diffusion-restore-inspect
    ```
 
 2. **Sincronizar el entorno y las dependencias con `uv`:**
    El gestor leerá automáticamente el archivo `pyproject.toml` y configurará el entorno virtual `.venv`:
+
    ```powershell
    uv sync
    uv pip install -e .
    ```
+
    *(Opcional recomendado para acelerar la carga de pesos y optimizar el procesamiento de imágenes)*:
+
    ```powershell
    uv pip install accelerate torchvision
    ```
 
 3. **Ejecutar la aplicación web local con Streamlit:**
    Invoca el comando a través de `uv run`:
+
    ```powershell
    uv run streamlit run src/app.py
    ```
 
 4. **Acceso:**
    Abre el navegador web en la URL local generada (por defecto: `http://localhost:8501`).
-
----
 
 ## 🖥️ Guía de Utilización de la Interfaz
 
@@ -110,8 +165,6 @@ Una vez abierta la aplicación en Streamlit, encontrarás el siguiente flujo de 
 3. **Panel de Transparencia (HAI - Honest AI):**
    * Una sección informativa dedicada a recordar la naturaleza estocástica del modelo y la importancia de contrastar el mapa de diferencias y las descripciones del VLM para asegurar que la semántica original no haya sido alterada artificialmente.
 
----
-
 ## 🧪 Metodología de Pruebas y Validación Empírica
 
 Para certificar el correcto funcionamiento del MVP y documentar los límites de la arquitectura, el sistema se ha validado mediante dos escenarios controlados registrados en detalle en [pruebas_validacion.md](./pruebas_validacion.md):
@@ -125,8 +178,6 @@ Para certificar el correcto funcionamiento del MVP y documentar los límites de 
    * **Insumo (`ejemplo_2_negativo.jpg`):** Logotipo vectorial sintético (`SYNTHETIC LOGISTICS`) con ruido añadido para evaluar el comportamiento del modelo estocástico frente a geometrías puras y tipografías.
    * **Parámetros:** `strength = 0.40` combinado con un prompt de textura fotográfica natural.
    * **Auditoría VLM & HAI:** Evidencia clara de desvío semántico y tipográfico en el *caption* del VLM (`synthtictictics` $\rightarrow$ `synthlogics`) y marcas de alta intensidad en el mapa de diferencias sobre los trazos de la marca, validando el sistema de transparencia ante las limitaciones del modelo.
-
----
 
 ## 📜 Declaración Responsable y Ética
 
