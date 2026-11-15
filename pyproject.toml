@@ -1,0 +1,23 @@
+[project]
+name = "diffusion-restore-inspect"
+version = "0.1.0"
+description = "MVP funcional de restauración de imágenes (denoising/deblurring) con modelos de difusión e inspección visual."
+readme = "README.md"
+requires-python = "==3.12.*"
+dependencies = [
+    "streamlit>=1.35.0",
+    "torch>=2.2.0",
+    "diffusers>=0.27.0",
+    "transformers>=4.39.0",
+    "pillow>=10.2.0",
+    "numpy>=1.26.0",
+    "opencv-python>=4.9.0",
+    "matplotlib>=3.8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/models", "src/utils"]
